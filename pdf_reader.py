@@ -5,12 +5,25 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams, LTTextBoxHorizontal, LTChar, LTFigure, LTLine
 from unidecode import unidecode
+import requests
+import json
 import sys
 import os
 
 horizontal_space = 210
 vertical_offset = 5
-write_csv = True
+
+# Bio-ontology Api params
+api_url = 'http://data.bioontology.org/annotator'
+api_key = ''
+api_format = 'json'
+api_ontology = 'DOID'
+sections = ['Thematic Areas Addressed', 'Elevator pitch', 'Short Activity Description', 'Activity Description',
+            'Knowledge triangle intregration', 'Link to Campus', 'Link to Accelerator', 'Societal Impact',
+            'What added value does EIT Health provide?', 'Why are EIT Health resources needed for the Activity?',
+            "Why is the Activity relevant for EIT Health's core mission?", "How will the Activity contribute to EIT Health's KPI's",
+            'Innovative Outputs', 'Market Need', 'Estimated market size', 'Market introduction strategy / deployment plan',
+            'Innovation barriers', 'TRL Before and After the Activity', 'SWOT', 'Technological Risk', 'Commercial Risk']
 
 
 class PdfMinerWrapper(object):
@@ -68,6 +81,46 @@ def write_csv(csv_file, output_text):
     # end for
     file_form.close()
     # end if
+
+
+def api_annotation(annotation_file, text_section, output_text, params=None):
+
+    # csv file for annotations
+    api_file = open(annotation_file, 'w')
+
+    api_file.write('id; section; text; tags\n')
+    document_id = ''
+
+    # find document ID
+    for value in output_text.itervalues():
+        for label in value:
+            if 'Generated Proposal ID'.lower() in label[0][1].lower():
+                document_id = label[1]
+                break
+
+    # find section in document labels
+    for section in text_section:
+        for value in output_text.itervalues():
+            for label in value:
+                if label[0][1].replace(" ", '').lower() == section.replace(" ", '').lower():
+                    api_file.write(document_id + ';' + label[0][1] + ';' + label[1].replace(';', ' ') + ';')
+                    # set data params for api connection
+                    data = params
+                    data['text'] = label[1]
+                    response = requests.post(api_url, json=data)
+                    print label[0][1] + ': ' + str(response.status_code)
+                    # get response and extract information from json
+                    data = response.json()
+                    for annotated_class in data:
+                        for note in annotated_class['annotations']:
+                            api_file.write(note['text'] + ', ')
+                    break
+                # end if
+            # end for
+        # end for
+        api_file.write('\n')
+    # end for
+    api_file.close()
 
 
 def is_valid_file(arg):
@@ -170,13 +223,18 @@ def main():
         # end for
 
         write_csv(str(filename) + '.csv', text)
+
+        if api_key == '':
+            print 'bio-ontology api key for api authorization not found. Set api key in python file'
+
+        api_params = dict(
+            apikey=api_key,
+            format=api_format,
+            ontologies=api_ontology
+        )
+        api_annotation(str(filename) + '-api_annotation.csv', sections, text, api_params)
     # end with
 
 
 if __name__ == '__main__':
     main()
-
-
-
-
-

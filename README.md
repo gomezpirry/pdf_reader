@@ -6,10 +6,11 @@ Read a pdf document and extract labels and text of form
 
 * __pdfminer:__ a tool for extracting information from PDF documents
 * __unidecode:__ a tool for representing unicode data in ASCII characters
+* __requests:__ a tool for HTTP requests
 
 ## Installation
 
-`pip install pdfminer unidecode`
+`pip install pdfminer unidecode requests`
 
 ## Usage
 
@@ -20,4 +21,5 @@ Read a pdf document and extract labels and text of form
 ### Output 
 
 * csv file with page, labels for page and text associated to label
+* csv file of annotations (biontology api)
 
