@@ -7,10 +7,11 @@ Read a pdf document and extract labels and text of form
 * __pdfminer:__ a tool for extracting information from PDF documents
 * __unidecode:__ a tool for representing unicode data in ASCII characters
 * __requests:__ a tool for HTTP requests
+* __Pillow:__ a Python image library
 
 ## Installation
 
-`pip install pdfminer unidecode requests`
+`pip install pdfminer unidecode requests Pillow`
 
 ## Usage
 
